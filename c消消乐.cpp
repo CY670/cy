@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include <mmsystem.h>
-#pragma comment(lib,"winmn.lib")
+
 
 
 #define WIN_WIGHT  485
@@ -43,11 +43,11 @@ int score;
 
 void init() {
 	initgraph(WIN_WIGHT, WIN_HEIGHT);
-	loadimage(&imgBg, "bg2.png");
+	loadimage(&imgBg, "res/bg2.png");
 
 	char name[64];
     for (int i = 0;i < BLOCK_TYPE_COUNT;i++) {
-		sprintf_s(name, sizeof(name), "%d.png", i + 1);
+		sprintf_s(name, sizeof(name), "res/%d.png", i + 1);
 		loadimage(&imgBlocks[i], name, block_size, block_size, true);
 	}
 
@@ -184,9 +184,56 @@ void check() {
 	for (int i = 1;i <= ROWS;i++) {
 		for (int j = 1;j <= COLS;j++) {
 			if (map[i][j].type == map[i + 1][j].type && map[i][j].type == map[i - 1][j].type) {
-				for(int k=-1;k<=1;k++)
+				for (int k = -1;k <= 1;k++) map[i + k][j].match++;
+			}
+			if (map[i][j].type == map[i][j - 1].type && map[i][j].type == map[i][j + 1].type) {
+				for (int k = -1;k <= 1;k++)  map[i + k][j].match++;
 			}
 		}
+	}
+}
+void xiaochu() {
+	bool flag = false;
+	for (int i = 1;i <= ROWS;i++) {
+		for (int j = 1;j <= COLS;j++) {
+			if (map[i][j].match && map[i][j].tmd > 10) {
+				if (map[i][j].tmd == 255) {
+					flag = true;
+				}
+				map[i][j].tmd -= 10;
+				isMoving = true;
+			}
+		}
+		if (flag) {
+			PlaySound("res/clear.wav", 0, SND_FILENAME | SND_ASYNC);
+		}
+	}
+}
+void updateGame() {
+	for (int i = ROWS;i >= 1;i--) {
+		for (int j = 1;j <= COLS;j++) {
+			if (map[i][j].match) {
+				for (int k = i - 1;k >= 1;k--) {
+					if (map[k][j].match == 0) {
+						exchange(k, j, i, j);
+						break;
+					}
+				}
+			}
+		}
+	}
+	for (int j = 1;j <= COLS;j++) {
+		int n = 0;
+		for (int i = ROWS;i >= 1;i--) {
+			if (map[i][j].match) {
+				map[i][j].type = 1 + rand() % 7;
+				map[i][j].y = off_y - (n + 1) * (block_size + 5);
+				n++;
+				map[i][j].match = 0;
+				map[i][j].tmd = 255;
+			}
+		}
+		score += n;
 	}
 }
 
@@ -203,7 +250,8 @@ int main(void) {
 		huanYuan();
 		updateWindow();
 
-		Sleep(10);
+		if (!isMoving)updateGame();
+		if(isMoving)Sleep(10);
 	}
 
 	system("pause");
