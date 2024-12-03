@@ -46,6 +46,7 @@ void init() {
 	loadimage(&imgBg, "res/bg2.png");
 
 	char name[64];
+
     for (int i = 0;i < BLOCK_TYPE_COUNT;i++) {
 		sprintf_s(name, sizeof(name), "res/%d.png", i + 1);
 		loadimage(&imgBlocks[i], name, block_size, block_size, true);
@@ -53,7 +54,7 @@ void init() {
 
 	srand(time(NULL));
 
-	memset(map, 0, sizeof(map));
+	
 	for (int i = 1;i <= ROWS;i++) {
 		for (int j = 1;j <= COLS;j++) {
 			map[i][j].type = 1 + rand() % 7;
@@ -84,7 +85,7 @@ void updateWindow() {
 		for (int j = 1;j <= COLS;j++) {
 			if (map[i][j].type) {
 				IMAGE* img = &imgBlocks[map[i][j].type - 1];
-				putimagePNG(map[i][j].x, map[i][j].y, img);
+				putimageTMD(map[i][j].x, map[i][j].y,img,map[i][j].tmd);
 			}
 		}
 	}
@@ -109,9 +110,10 @@ void exchange(int row1, int col1, int row2, int col2) {
 void userClick() {
 	ExMessage msg;
 	if (peekmessage(&msg) && msg.message == WM_LBUTTONDOWN) {
-		/*	map[i][j].x = off_x + (j - 1) * (block_size + 5);
+		/*	
+		    map[i][j].x = off_x + (j - 1) * (block_size + 5);
 		    map[i][j].y = off_y + (i - 1) * (block_size + 5);
-	   */
+	    */
 		if (msg.x < off_x || msg.y < off_y) return;
 		int col = (msg.x - off_x) / (block_size + 5) + 1;
 		int row = (msg.y - off_y) / (block_size + 5) + 1;
@@ -152,6 +154,8 @@ void move() {
 			struct block* p = &map[i][j];
 			int dx, dy;
 
+			
+
 			for (int k = 0;k < 4;k++) {
 				int x = off_x + (p->col - 1) * (block_size + 5);
 				int y = off_y + (p->row - 1) * (block_size + 5);
@@ -187,7 +191,7 @@ void check() {
 				for (int k = -1;k <= 1;k++) map[i + k][j].match++;
 			}
 			if (map[i][j].type == map[i][j - 1].type && map[i][j].type == map[i][j + 1].type) {
-				for (int k = -1;k <= 1;k++)  map[i + k][j].match++;
+				for (int k = -1;k <= 1;k++)  map[i][j+k].match++;
 			}
 		}
 	}
@@ -246,12 +250,12 @@ int main(void) {
 		userClick();
 		check();
 		move();
-		if (!isMoving)xiaochu();
+		if(!isMoving)xiaochu();
 		huanYuan();
 		updateWindow();
 
-		if (!isMoving)updateGame();
-		if(isMoving)Sleep(10);
+		if (!isMoving) updateGame();
+		if(isMoving) Sleep(10);
 	}
 
 	system("pause");
